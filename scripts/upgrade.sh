@@ -102,6 +102,47 @@ verify_masters_versions() {
   done
 }
 
+#  CONFIG_FILE="/host/etc/rancher/k3s/config.yaml"
+#  NEW_CONFIG="/host/opt/k3s/config.yaml"
+#if [ ! -f "$CONFIG_FILE" ]; then
+#  cp $NEW_CONFIG $CONFIG_FILE
+#else
+#  mapfile -t CONF_ARR < $CONFIG_FILE
+#  while read $L; do
+#    LINE=$(echo $L | tr ":")
+#    CONF_ARR[LINE[0]]=LINE[1]
+#  done < NEW_CONFIG
+#fi
+
+replace_config_file(){
+#  if [ -f "/host/opt/k3s/$HOSTNAME-config.yaml" ] ; then
+#    cp /host/opt/k3s/$HOSTNAME-config.yaml /host/etc/rancher/k3s/config.yaml
+#    echo "found /host/opt/k3s/$HOSTNAME-config.yaml"
+#    return
+#  elif [ -f  "/host/opt/k3s/default-config.yaml" ] ; then
+#    cp /host/opt/k3s/default-config.yaml /host/etc/rancher/k3s/config.yaml
+#    echo "applying default config"
+#    return
+#  fi
+#  echo "nothing changed"
+labels=$(${KUBECTL_BIN} get nodes $HOSTNAME  --show-labels | tail -n +2  | awk '{print $6}' )
+list=$(echo $labels | tr "," "\n")
+for label in $list
+do
+  if [ -f "/host/opt/k3s/$label"]
+   cp /host/opt/k3s/$label /host/etc/rancher/k3s/config.yaml
+   return
+   fi
+done
+
+}
+
+config(){
+  get_k3s_process_info
+  replace_config_file
+  kill_k3s_process
+}
+
 upgrade() {
   get_k3s_process_info
   replace_binary
